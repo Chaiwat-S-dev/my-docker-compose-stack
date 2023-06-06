@@ -1,0 +1,324 @@
+version: "3"
+
+services:
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pg
+    hostname: pg
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PG_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_PASS}
+      # PGADMIN_ENABLE_TLS: 'True'
+      PGADMIN_LISTEN_PORT: 5051
+    # ports:
+    #   - "5051:80"
+  #  volumes:
+  #    - "/home/ubuntu/ssl/fullchain.pem:/certs/server.cert"
+  #    - "/home/ubuntu/ssl/_.sitearound.com.key:/certs/server.key"
+    # networks:
+    #   - backend
+    network_mode: "host"
+
+  db:
+    image: postgres:13.7
+    container_name: db
+    hostname: db
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: iot_dev
+    # volumes:
+    #   - "./configuration/postgresql/:/docker-entrypoint-initdb.d"
+    networks:
+      - backend
+
+  # api:
+  #   build: .
+  #   container_name: api
+  #   hostname: api
+  #   restart: always
+  #   command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+  #   # command: bash -c "python manage.py migrate && python manage.py collectstatic  --noinput && gunicorn --env DJANGO_SETTINGS_MODULE=apps.settings apps.asgi"
+  #   # command: bash -c "python manage.py migrate && python manage.py seed && python manage.py collectstatic  --noinput && gunicorn --env DJANGO_SETTINGS_MODULE=apps.settings apps.wsgi"
+  #   # command: gunicorn --env DJANGO_SETTINGS_MODULE=apps.settings apps.wsgi --workers 8 --timeout 120 --bind=0.0.0.0:8000
+  #   environment:
+  #     ENVIRONMENT_TYPE: 'True'
+  #     DJANGO_ALLOWED_HOSTS: "*"
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     CACHE_LOCATIONS: ${CELERY_BROKER_URL}
+  #     DATABASES_NAME: ${POSTGRES_DB}
+  #     DATABASES_USER: ${POSTGRES_USER}
+  #     DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     DATABASES_HOST: db
+  #     DATABASES_PORT: 5432
+  #     BROKER_URL: redis://redis:6379/0
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_BROKER_URL}
+  #     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  #     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  #     AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+  #     AWS_TEMP_BUCKET_NAME: ${AWS_TEMP_BUCKET_NAME}
+  #     AWS_SES_ACCESS_KEY_ID: ${AWS_SES_ACCESS_KEY_ID}
+  #     AWS_SES_SECRET_ACCESS_KEY: ${AWS_SES_SECRET_ACCESS_KEY}
+  #     INTERAL_SUBTOPIC_ENV: ${INTERAL_SUBTOPIC_ENV}
+  #     INFLUX_TOKEN: ${INFLUXDB_TOKEN}
+  #   volumes:
+  #     - .:/code/
+  #   ports:
+  #     - 8000:8000
+  #   depends_on: 
+  #     - redis
+  #     - db
+  #   networks:
+  #     - backend
+
+  # websocket:
+  #   build: .
+  #   container_name: websocket
+  #   hostname: websocket
+  #   # restart: always
+  #   command: bash -c 'daphne -b 0.0.0.0 -p 8001 apps.asgi:application'
+  #   environment:
+  #     DEBUG: "True"
+  #     DJANGO_ALLOWED_HOSTS: "*"
+  #     DJANGO_SETTINGS_MODULE: apps.settings
+  #     CACHE_LOCATIONS: redis://redis:6379
+  #     DATABASES_NAME: ${POSTGRES_DB}
+  #     DATABASES_USER: ${POSTGRES_USER}
+  #     DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     DATABASES_HOST: db
+  #     DATABASES_PORT: 5432
+  #     DOMAIN_NAME: http://api:8000
+  #     INFLUX_dbURL: http://influxdb:8086
+  #     INFLUX_TOKEN: ${INFLUXDB_TOKEN}
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #   ports:
+  #     - "8001:8001"
+  #   volumes:
+  #     - "./logs/:/code/logs/"
+  #     - "./statics/:/code/statics/"
+  #   networks:
+  #     - backend    
+  #   depends_on:
+  #     - db
+  #     - redis
+
+  # celery:
+  #   image: iot-tool-api_api:latest
+  #   container_name: celery_worker
+  #   restart: always
+  #   command: bash -c "celery -A apps worker -l INFO"
+  #   environment:
+  #     DJANGO_ALLOWED_HOSTS: "*"
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     CACHES_LOCATION: ${CELERY_BROKER_URL}
+  #     DATABASES_NAME: ${POSTGRES_DB}
+  #     DATABASES_USER: ${POSTGRES_USER}
+  #     DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     DATABASES_HOST: db
+  #     DATABASES_PORT: 5432
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_BROKER_URL}
+  #     INTERAL_SUBTOPIC_ENV: ${INTERAL_SUBTOPIC_ENV}
+  #     SSL_MODE: 'False'
+  #     MQTT_BROKER: mosquitto
+  #     BROKER_PORT: 1883
+  #     CA_PATH: ${CA_PATH}
+  #     CERT_PATH: ${CERT_PATH}
+  #     KEY_PATH: ${KEY_PATH}
+  #   # volumes:
+  #   #   - backend-data:/usr/src/app/
+  #   depends_on:
+  #     - redis
+  #     - db
+  #     - api
+  #   volumes:
+  #     - "./logs/:/code/logs/"
+  #     - "./statics/:/code/statics/"
+  #     - "./cert/:/code/cert/"
+  #   networks:
+  #     - backend
+
+  redis:
+    image: redis
+    container_name: redis_con
+    hostname: redis
+    restart: always
+    # ports:
+    #   - 6379:6379
+    networks:
+      - backend
+  
+  consumer:
+    image: middleware-mqtt-consumer:latest
+    container_name: "middleware_mqtt_service"
+    restart: always
+    environment:
+      DATABASES_NAME: ${POSTGRES_DB}
+      DATABASES_USER: ${POSTGRES_USER}
+      DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASES_HOST: localhost
+      DATABASES_PORT: 5432
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      SSL_MODE: disable
+      TIME_ZONE: Asia/Bangkok
+      INFLUX_URL: http://localhost:8086
+      INFLUX_TOKEN: ${INFLUXDB_TOKEN}
+      CA_PATH: ${CA_PATH}
+      CERT_PATH: ${CERT_PATH}
+      KEY_PATH: ${KEY_PATH}
+      INTERAL_SUBTOPIC_ENV: ${INTERAL_SUBTOPIC_ENV}
+    volumes:
+      - ./cert/:/code/cert/
+      - ./middleware_logs/:/code/middleware_logs/
+    # networks:
+    #   - backend
+    command: bash -c "python3 main.py"
+    network_mode: "host"
+
+  # alert:
+  #   image: middleware-alert:latest
+  #   container_name: "middleware_alert_service"
+  #   restart: always
+  #   environment:
+  #     - DATABASES_NAME=${POSTGRES_DB}
+  #     - DATABASES_USER=${POSTGRES_USER}
+  #     - DATABASES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - DATABASES_HOST=db
+  #     - DATABASES_PORT=5432
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #     - SSL_MODE=False
+  #     - TIME_ZONE=Asia/Bangkok
+  #     # - INFLUX_URL="http://192.168.11.29:8086"
+  #     - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+  #     - CA_PATH=${CA_PATH}
+  #     - CERT_PATH=${CERT_PATH}
+  #     - KEY_PATH=${KEY_PATH}
+  #   volumes:
+  #     - ./cert/:/code/cert/
+  #   networks:
+  #     - backend
+  #   command: bash -c "python3 main.py"
+
+  # control:
+  #   image: middleware-control:latest
+  #   container_name: "middleware_control_service"
+  #   restart: always
+  #   environment:
+  #     - DATABASES_NAME=${POSTGRES_DB}
+  #     - DATABASES_USER=${POSTGRES_USER}
+  #     - DATABASES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - DATABASES_HOST=db
+  #     - DATABASES_PORT=5432
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #     - SSL_MODE=False
+  #     - TIME_ZONE=Asia/Bangkok
+  #     # - INFLUX_URL="http://192.168.11.29:8086"
+  #     - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+  #     - CA_PATH=${CA_PATH}
+  #     - CERT_PATH=${CERT_PATH}
+  #     - KEY_PATH=${KEY_PATH}
+  #   volumes:
+  #     - ./cert/:/code/cert/
+  #   networks:
+  #     - backend
+  #   command: bash -c "python3 main.py"
+
+  influxdb:
+    image: influxdb:2.3
+    container_name: influxdb
+    hostname: influxdb
+    restart: always
+    environment:
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+    ports:
+      - 8086:8086
+    volumes:
+      - influxdb2-data:/var/lib/influxdb2:rw
+    networks:
+      - backend
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - grafana-storage:/var/lib/grafana
+  #     - ./grafana-provisioning/:/etc/grafana/provisioning
+  #   depends_on:
+  #     - influxdb
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=swd12345
+  #   networks:
+  #     - backend
+  
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mqtt_mosquitto
+    hostname: mosquitto
+    restart: always
+    ports:
+      - 1883:1883
+    volumes:
+      - "./configuration/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf"
+    networks:
+      - backend
+  
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    ports:
+      - '9443:9443'
+    volumes:
+      - 'portainer_data:/data'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    restart: always
+  
+  dashy:
+    # To build from source, replace 'image: lissy93/dashy' with 'build: .'
+    # build: .
+    image: lissy93/dashy
+    container_name: dashy
+    # Pass in your config file below, by specifying the path on your host machine
+    volumes:
+      - "./configuration/dashy/dashy_conf.yml:/app/public/conf.yml"
+    ports:
+      - 4000:80
+    # Set any environmental variables
+    environment:
+      - NODE_ENV=production
+    # Specify your user ID and group ID. You can find this by running `id -u` and `id -g`
+    #  - UID=1000
+    #  - GID=1000
+    # Specify restart policy
+    restart: unless-stopped
+    # Configure healthchecks
+    healthcheck:
+      test: ['CMD', 'node', '/app/services/healthcheck']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  influxdb2-data:
+  portainer_data:
