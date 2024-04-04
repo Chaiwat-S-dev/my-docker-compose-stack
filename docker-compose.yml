@@ -314,6 +314,47 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  
+  mongodb:
+    image: mongo:latest
+    hostname: mongodb
+    container_name: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+      - ./import:/import
+    networks:
+      - backend
+
+  mongo-express:
+    image: mongo-express
+    hostname: mongo_express
+    container_name: mongo_express
+    restart: always
+    ports:
+      - 8084:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+    networks:
+      - backend
+    depends_on:
+      - mongodb
+  
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
 
 networks:
   backend:
@@ -322,3 +363,4 @@ networks:
 volumes:
   influxdb2-data:
   portainer_data:
+  mongodb_data:
